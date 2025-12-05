@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>TTB Label Verifier (AI-Powered)</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .match-true { color: green; font-weight: bold; }
+        .match-false { color: red; font-weight: bold; }
+        .loading { display: none; }
+    </style>
+</head>
+<body class="bg-light">
+    <div class="container py-5">
+        <h1 class="mb-4 text-center">🍷 AI Alcohol Label Verifier</h1>
+        
+        <div class="row">
+            <div class="col-md-5">
+                <div class="card p-4 shadow-sm">
+                    <h4>1. Enter Product Details</h4>
+                    <form id="verifyForm">
+                        <div class="mb-3">
+                            <label class="form-label">Brand Name</label>
+                            <input type="text" class="form-control" name="brand_name" value="Old Tom Distillery" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Class / Type</label>
+                            <input type="text" class="form-control" name="product_type" value="Bourbon Whiskey" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Alcohol Content (ABV)</label>
+                            <input type="text" class="form-control" name="abv" value="45%" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Net Contents</label>
+                            <input type="text" class="form-control" name="net_contents" value="750ml">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Label Image</label>
+                            <input type="file" class="form-control" name="file" accept="image/*" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary w-100">Verify Label</button>
+                    </form>
+                </div>
+            </div>
+
+            <div class="col-md-7">
+                <div id="loading" class="alert alert-info loading">
+                    Processing image with Gemini AI... please wait.
+                </div>
+                
+                <div id="resultsArea" style="display:none;">
+                    <div class="card p-4 shadow-sm">
+                        <h4 class="mb-3">Verification Results</h4>
+                        <div id="overallStatus" class="alert mb-3"></div>
+                        
+                        <table class="table table-bordered">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Field</th>
+                                    <th>Status</th>
+                                    <th>AI Findings</th>
+                                </tr>
+                            </thead>
+                            <tbody id="resultsTable">
+                                </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('verifyForm').onsubmit = async (e) => {
+            e.preventDefault();
+            const formData = new FormData(e.target);
+            
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('resultsArea').style.display = 'none';
+
+            const response = await fetch('/verify', { method: 'POST', body: formData });
+            const data = await response.json();
+
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('resultsArea').style.display = 'block';
+            
+            // Render Overall Status
+            const overallDiv = document.getElementById('overallStatus');
+            if(data.overall_match) {
+                overallDiv.className = "alert alert-success";
+                overallDiv.innerText = "✅ SUCCESS: Label matches form data.";
+            } else {
+                overallDiv.className = "alert alert-danger";
+                overallDiv.innerText = "❌ FAILURE: Discrepancies found.";
+            }
+
+            // Render Table Rows
+            const table = document.getElementById('resultsTable');
+            table.innerHTML = '';
+            
+            const fields = [
+                {k: 'brand_name', label: 'Brand'},
+                {k: 'product_type', label: 'Type'},
+                {k: 'abv', label: 'ABV'},
+                {k: 'net_contents', label: 'Net Contents'},
+                {k: 'government_warning', label: 'Gov Warning'}
+            ];
+
+            fields.forEach(f => {
+                const item = data[f.k];
+                let statusIcon = "❓";
+                let details = "";
+
+                if (f.k === 'government_warning') {
+                    statusIcon = item.present ? "✅" : "❌";
+                    details = item.present ? "Warning found." : "Warning missing.";
+                } else {
+                    statusIcon = item.match ? "✅" : "❌";
+                    details = `Found: "${item.found_value}" <br><small class="text-muted">${item.reason}</small>`;
+                }
+
+                const row = `<tr>
+                    <td>${f.label}</td>
+                    <td class="fs-4">${statusIcon}</td>
+                    <td>${details}</td>
+                </tr>`;
+                table.innerHTML += row;
+            });
+        };
+    </script>
+</body>
+</html>
