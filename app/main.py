@@ -230,6 +230,18 @@ async def verify_label(
     }
 
     try:
+        # Mock Response for Testing (if TEST_MODE env var is set)
+        if os.environ.get("TEST_MODE") == "true":
+            return {
+                "brand_name": {"match": True, "found_value": "Old Tom", "reason": "Exact match"},
+                "product_type": {"match": True, "found_value": "Bourbon", "reason": "Match"},
+                "abv": {"match": True, "found_value": "45%", "reason": "Match"},
+                "net_contents": {"match": True, "found_value": "750ml", "reason": "Match"},
+                "government_warning": {"present": True, "found_text_snippet": "Surgeon General..."},
+                "overall_match": True,
+                "usage": {"total_tokens": 0}
+            }
+
         verification_result = analyze_label_with_gemini(image_bytes, form_data)
         return verification_result
     except Exception as e:
