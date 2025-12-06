@@ -1,132 +1,469 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>TTB Label Verifier (AI-Powered)</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TTB Label Verifier | AI Compliance Assistant</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
     <style>
-        .match-true { color: green; font-weight: bold; }
-        .match-false { color: red; font-weight: bold; }
-        .loading { display: none; }
+        :root {
+            /* TTB/Agency Palette */
+            --agency-blue: #003366;       /* Dark outer ring: Navbar, Headings */
+            --compliance-gold: #FDB813;   /* Shield background: Buttons, Highlights */
+            --bureau-light-blue: #5D87A1; /* Scales & key: Secondary, Borders */
+            --white: #FFFFFF;
+            
+            /* Bootstrap Overrides */
+            --bs-primary: var(--agency-blue);
+            --bs-secondary: var(--bureau-light-blue);
+            --bs-link-color: var(--bureau-light-blue);
+        }
+        
+        body {
+            background-color: #f4f6f8;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            color: #333;
+        }
+        
+        /* Typography */
+        h1, h2, h3, h4, h5, h6, .card-header {
+            color: var(--agency-blue);
+        }
+        
+        /* Navbar */
+        .navbar {
+            background-color: var(--agency-blue) !important;
+        }
+        .navbar-brand { 
+            font-weight: 700; 
+            letter-spacing: 0.5px;
+            color: var(--white) !important;
+        }
+        
+        /* Custom Buttons */
+        .btn-verify {
+            background-color: var(--compliance-gold);
+            border-color: var(--compliance-gold);
+            color: #000; /* Black text on Gold for contrast */
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .btn-verify:hover {
+            background-color: #e0a800;
+            border-color: #d39e00;
+            color: #000;
+        }
+
+        /* Cards */
+        .card {
+            border: 1px solid rgba(0,0,0,0.05);
+            box-shadow: 0 4px 15px rgba(0, 51, 102, 0.08); /* Slight blue tint to shadow */
+            border-radius: 8px;
+            margin-bottom: 20px;
+            overflow: hidden;
+        }
+        .card-header {
+            background-color: #fff;
+            border-bottom: 2px solid var(--bureau-light-blue); /* Light blue border */
+            font-weight: 700;
+            padding: 1rem 1.25rem;
+        }
+
+        /* Drop Zone */
+        .drop-zone {
+            border: 2px dashed var(--bureau-light-blue);
+            border-radius: 8px;
+            padding: 2rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            background: #fff;
+        }
+        .drop-zone:hover, .drop-zone.dragover {
+            border-color: var(--agency-blue);
+            background-color: rgba(93, 135, 161, 0.1); /* Light blue tint */
+        }
+        .drop-zone input { display: none; }
+        .drop-zone i { color: var(--compliance-gold); } /* Gold Icon */
+
+        /* Image Preview & Overlays */
+        .image-container {
+            position: relative;
+            background: #2c3e50; /* Neutral dark back for image */
+            border-radius: 4px;
+            min-height: 200px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            border: 1px solid var(--bureau-light-blue);
+        }
+        #previewImage {
+            max-width: 100%;
+            display: block;
+        }
+        .placeholder-text { color: var(--white); opacity: 0.7; }
+
+        /* Bounding Boxes */
+        .highlight-box {
+            position: absolute;
+            border: 3px solid;
+            background-color: rgba(255, 255, 255, 0.1);
+            cursor: pointer;
+            z-index: 10;
+            transition: all 0.2s;
+        }
+        .highlight-box:hover {
+            background-color: rgba(253, 184, 19, 0.2); /* Gold tint on hover */
+            box-shadow: 0 0 8px var(--compliance-gold);
+            z-index: 20;
+            border-color: var(--compliance-gold) !important;
+        }
+
+        /* Loading Overlay */
+        .loading-overlay {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(255,255,255,0.9);
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 50;
+            border-radius: 8px;
+        }
+
+        /* Sticky Columns */
+        @media (min-width: 992px) {
+            .sticky-col {
+                position: sticky;
+                top: 20px;
+                height: fit-content;
+            }
+        }
+
+        /* Results */
+        .status-badge { font-size: 0.8rem; font-weight: 700; }
+        .result-row { transition: background-color 0.2s; border-left: 3px solid transparent; }
+        .result-row:hover { background-color: #f8f9fa; border-left-color: var(--compliance-gold); }
     </style>
 </head>
-<body class="bg-light">
-    <div class="container py-5">
-        <h1 class="mb-4 text-center">🍷 AI Alcohol Label Verifier</h1>
+<body>
+
+<nav class="navbar navbar-expand-lg navbar-dark mb-4">
+    <div class="container-fluid px-4">
+        <a class="navbar-brand" href="#">
+            <i class="bi bi-shield-fill-check text-warning me-2" style="color: var(--compliance-gold) !important;"></i>TTB Verifier <small class="opacity-50 fw-normal ms-1" style="font-size: 0.6em; text-transform: uppercase; letter-spacing: 1px;">Official Tool</small>
+        </a>
+    </div>
+</nav>
+
+<div class="container-fluid px-4 pb-5">
+    <div class="row g-4">
         
-        <div class="row">
-            <div class="col-md-5">
-                <div class="card p-4 shadow-sm">
-                    <h4>1. Enter Product Details</h4>
+        <!-- COLUMN 1: INPUT FORM -->
+        <div class="col-lg-3">
+            <div class="card sticky-col">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <span>Product Details</span>
+                    <i class="bi bi-pencil-square text-secondary"></i>
+                </div>
+                <div class="card-body">
                     <form id="verifyForm">
                         <div class="mb-3">
-                            <label class="form-label">Brand Name</label>
+                            <label class="form-label small text-muted text-uppercase fw-bold">Brand Name</label>
                             <input type="text" class="form-control" name="brand_name" value="Old Tom Distillery" required>
                         </div>
                         <div class="mb-3">
-                            <label class="form-label">Class / Type</label>
+                            <label class="form-label small text-muted text-uppercase fw-bold">Class / Type</label>
                             <input type="text" class="form-control" name="product_type" value="Bourbon Whiskey" required>
                         </div>
-                        <div class="mb-3">
-                            <label class="form-label">Alcohol Content (ABV)</label>
-                            <input type="text" class="form-control" name="abv" value="45%" required>
+                        <div class="row g-2">
+                            <div class="col-6 mb-3">
+                                <label class="form-label small text-muted text-uppercase fw-bold">ABV</label>
+                                <input type="text" class="form-control" name="abv" value="45%" required>
+                            </div>
+                            <div class="col-6 mb-3">
+                                <label class="form-label small text-muted text-uppercase fw-bold">Net Content</label>
+                                <input type="text" class="form-control" name="net_contents" value="750ml">
+                            </div>
                         </div>
+
+                        <hr class="my-4">
+
                         <div class="mb-3">
-                            <label class="form-label">Net Contents</label>
-                            <input type="text" class="form-control" name="net_contents" value="750ml">
+                            <label class="form-label small text-muted text-uppercase fw-bold">Label Image</label>
+                            <div class="drop-zone" id="dropZone">
+                                <i class="bi bi-cloud-arrow-up-fill fs-1 mb-2"></i>
+                                <p class="mb-0 mt-2 small text-muted">Drag & drop or click to upload</p>
+                                <input type="file" name="file" id="fileInput" accept="image/*" required>
+                            </div>
                         </div>
-                        <div class="mb-3">
-                            <label class="form-label">Label Image</label>
-                            <input type="file" class="form-control" name="file" accept="image/*" required>
-                        </div>
-                        <button type="submit" class="btn btn-primary w-100">Verify Label</button>
+
+                        <button type="submit" class="btn btn-verify w-100 py-3 shadow-sm">
+                            <i class="bi bi-patch-check-fill me-2"></i>Verify Compliance
+                        </button>
                     </form>
                 </div>
             </div>
+        </div>
 
-            <div class="col-md-7">
-                <div id="loading" class="alert alert-info loading">
-                    Processing image with Gemini AI... please wait.
+        <!-- COLUMN 2: IMAGE EVIDENCE -->
+        <div class="col-lg-5">
+            <div class="card sticky-col">
+                <div class="card-header">
+                    <i class="bi bi-image me-2 text-secondary"></i>Label Evidence
                 </div>
-                
-                <div id="resultsArea" style="display:none;">
-                    <div class="card p-4 shadow-sm">
-                        <h4 class="mb-3">Verification Results</h4>
-                        <div id="overallStatus" class="alert mb-3"></div>
-                        
-                        <table class="table table-bordered">
-                            <thead class="table-light">
-                                <tr>
-                                    <th>Field</th>
-                                    <th>Status</th>
-                                    <th>AI Findings</th>
-                                </tr>
-                            </thead>
-                            <tbody id="resultsTable">
-                                </tbody>
-                        </table>
+                <div class="card-body p-2 bg-light rounded-bottom">
+                    <div class="image-container" id="imageContainer">
+                        <span class="placeholder-text" id="placeholderText">
+                            <i class="bi bi-file-earmark-image fs-2 d-block text-center mb-2"></i>
+                            No image selected
+                        </span>
+                        <img id="previewImage" style="display:none;">
+                        <div id="overlayContainer"></div>
                     </div>
                 </div>
             </div>
         </div>
+
+        <!-- COLUMN 3: RESULTS -->
+        <div class="col-lg-4">
+            <div class="card h-100" style="min-height: 400px;">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <span>Verification Results</span>
+                    <span id="tokenBadge" class="badge bg-light text-dark border" style="display:none;">0 Tokens</span>
+                </div>
+                
+                <!-- Loading Overlay -->
+                <div id="loading" class="loading-overlay">
+                    <div class="spinner-border text-warning mb-3" role="status" style="width: 3rem; height: 3rem; color: var(--compliance-gold) !important;"></div>
+                    <h5 class="text-muted">Analyzing Label...</h5>
+                    <small class="text-muted">Checking Cloud Vision & Gemini AI</small>
+                </div>
+
+                <div class="card-body" id="resultsBody">
+                    <div id="emptyState" class="text-center py-5 text-muted">
+                        <i class="bi bi-clipboard-data fs-1 d-block mb-3 opacity-25"></i>
+                        <p>Submit the form to see verification results here.</p>
+                    </div>
+
+                    <div id="resultsContent" style="display:none;">
+                        <div id="overallStatus" class="alert mb-4 d-flex align-items-center" role="alert">
+                            <!-- Content injected via JS -->
+                        </div>
+
+                        <div class="list-group list-group-flush border rounded" id="resultsList">
+                            <!-- Results injected via JS -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
     </div>
+</div>
 
-    <script>
-        document.getElementById('verifyForm').onsubmit = async (e) => {
-            e.preventDefault();
-            const formData = new FormData(e.target);
+<script>
+    // --- Drag & Drop + File Handling ---
+    const dropZone = document.getElementById('dropZone');
+    const fileInput = document.getElementById('fileInput');
+    const previewImage = document.getElementById('previewImage');
+    const placeholderText = document.getElementById('placeholderText');
+    const overlayContainer = document.getElementById('overlayContainer');
+    const imageContainer = document.getElementById('imageContainer');
+
+    dropZone.addEventListener('click', () => fileInput.click());
+
+    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+        dropZone.addEventListener(eventName, preventDefaults, false);
+    });
+    function preventDefaults(e) { e.preventDefault(); e.stopPropagation(); }
+
+    ['dragenter', 'dragover'].forEach(eventName => {
+        dropZone.addEventListener(eventName, () => dropZone.classList.add('dragover'), false);
+    });
+    ['dragleave', 'drop'].forEach(eventName => {
+        dropZone.addEventListener(eventName, () => dropZone.classList.remove('dragover'), false);
+    });
+
+    dropZone.addEventListener('drop', handleDrop, false);
+    function handleDrop(e) {
+        const dt = e.dataTransfer;
+        const files = dt.files;
+        fileInput.files = files;
+        handleFiles(files);
+    }
+
+    fileInput.addEventListener('change', function() {
+        handleFiles(this.files);
+    });
+
+    function handleFiles(files) {
+        if (files && files[0]) {
+            const file = files[0];
+            const url = URL.createObjectURL(file);
+            previewImage.src = url;
+            previewImage.style.display = 'block';
+            placeholderText.style.display = 'none';
             
-            document.getElementById('loading').style.display = 'block';
-            document.getElementById('resultsArea').style.display = 'none';
+            // Reset UI
+            document.getElementById('resultsContent').style.display = 'none';
+            document.getElementById('emptyState').style.display = 'block';
+            overlayContainer.innerHTML = '';
+            
+            // Update Dropzone text
+            dropZone.querySelector('p').innerText = file.name;
+        }
+    }
 
+    // --- Form Submission ---
+    document.getElementById('verifyForm').onsubmit = async (e) => {
+        e.preventDefault();
+        
+        // UI Loading State
+        const loadingOverlay = document.getElementById('loading');
+        const resultsBody = document.getElementById('resultsContent');
+        const emptyState = document.getElementById('emptyState');
+        
+        loadingOverlay.style.display = 'flex';
+        emptyState.style.display = 'none';
+        resultsBody.style.display = 'none';
+        overlayContainer.innerHTML = '';
+
+        const formData = new FormData(e.target);
+
+        try {
             const response = await fetch('/verify', { method: 'POST', body: formData });
             const data = await response.json();
 
-            document.getElementById('loading').style.display = 'none';
-            document.getElementById('resultsArea').style.display = 'block';
-            
-            // Render Overall Status
-            const overallDiv = document.getElementById('overallStatus');
-            if(data.overall_match) {
-                overallDiv.className = "alert alert-success";
-                overallDiv.innerText = "✅ SUCCESS: Label matches form data.";
+            // Reset UI
+            loadingOverlay.style.display = 'none';
+            resultsBody.style.display = 'block';
+
+            renderResults(data);
+
+        } catch (error) {
+            console.error(error);
+            loadingOverlay.style.display = 'none';
+            alert("An error occurred during verification.");
+        }
+    };
+
+    function renderResults(data) {
+        // 1. Overall Status
+        const overallDiv = document.getElementById('overallStatus');
+        if(data.overall_match) {
+            overallDiv.className = "alert alert-success mb-4";
+            overallDiv.innerHTML = '<i class="bi bi-check-circle-fill fs-4 me-3"></i><div><strong>Compliance Check Passed</strong><div class="small">Label matches all submitted criteria.</div></div>';
+        } else {
+            overallDiv.className = "alert alert-danger mb-4";
+            overallDiv.innerHTML = '<i class="bi bi-exclamation-triangle-fill fs-4 me-3"></i><div><strong>Discrepancies Found</strong><div class="small">Review the items below.</div></div>';
+        }
+
+        // 2. Token Usage
+        if (data.usage) {
+            const badge = document.getElementById('tokenBadge');
+            badge.innerText = `${data.usage.total_tokens} AI Tokens`;
+            badge.style.display = 'inline-block';
+        }
+
+        // 3. List Items
+        const list = document.getElementById('resultsList');
+        list.innerHTML = '';
+        
+        const fields = [
+            {k: 'brand_name', label: 'Brand Name'},
+            {k: 'product_type', label: 'Product Class'},
+            {k: 'abv', label: 'Alcohol Content'},
+            {k: 'net_contents', label: 'Net Contents'},
+            {k: 'government_warning', label: 'Gov. Warning'}
+        ];
+
+        fields.forEach(f => {
+            const item = data[f.k];
+            if (!item) return;
+
+            let isMatch = false;
+            let badgeClass = "bg-secondary";
+            let badgeText = "Unknown";
+            let contentHtml = "";
+            let color = "grey";
+
+            if (f.k === 'government_warning') {
+                isMatch = item.present;
+                badgeClass = isMatch ? "bg-success" : "bg-danger";
+                badgeText = isMatch ? "PRESENT" : "MISSING";
+                contentHtml = isMatch ? "Mandatory warning statement found." : "Mandatory warning statement NOT found.";
+                color = isMatch ? "green" : "red";
             } else {
-                overallDiv.className = "alert alert-danger";
-                overallDiv.innerText = "❌ FAILURE: Discrepancies found.";
+                isMatch = item.match;
+                badgeClass = isMatch ? "bg-success" : "bg-danger";
+                badgeText = isMatch ? "MATCH" : "MISMATCH";
+                contentHtml = `Found: <strong>"${item.found_value || 'N/A'}"</strong>`;
+                if (!isMatch) contentHtml += `<div class="text-danger small mt-1">${item.reason}</div>`;
+                color = isMatch ? "green" : "red";
             }
 
-            // Render Table Rows
-            const table = document.getElementById('resultsTable');
-            table.innerHTML = '';
+            const listItem = document.createElement('div');
+            listItem.className = "list-group-item result-row py-3";
+            listItem.innerHTML = `
+                <div class="d-flex justify-content-between align-items-center mb-1">
+                    <h6 class="mb-0 text-muted text-uppercase" style="font-size: 0.75rem; letter-spacing: 1px;">${f.label}</h6>
+                    <span class="badge ${badgeClass} status-badge rounded-pill">${badgeText}</span>
+                </div>
+                <div class="mt-1">${contentHtml}</div>
+            `;
             
-            const fields = [
-                {k: 'brand_name', label: 'Brand'},
-                {k: 'product_type', label: 'Type'},
-                {k: 'abv', label: 'ABV'},
-                {k: 'net_contents', label: 'Net Contents'},
-                {k: 'government_warning', label: 'Gov Warning'}
-            ];
+            // Hover Effect: Highlight box
+            listItem.addEventListener('mouseenter', () => highlightBox(f.k));
+            listItem.addEventListener('mouseleave', () => unhighlightBox(f.k));
+            
+            list.appendChild(listItem);
 
-            fields.forEach(f => {
-                const item = data[f.k];
-                let statusIcon = "❓";
-                let details = "";
+            // Draw Box
+            if (item.box_2d) {
+                drawBox(item.box_2d, color, f.k, f.label);
+            }
+        });
+    }
 
-                if (f.k === 'government_warning') {
-                    statusIcon = item.present ? "✅" : "❌";
-                    details = item.present ? "Warning found." : "Warning missing.";
-                } else {
-                    statusIcon = item.match ? "✅" : "❌";
-                    details = `Found: "${item.found_value}" <br><small class="text-muted">${item.reason}</small>`;
-                }
+    function drawBox(box, color, id, label) {
+        const [ymin, xmin, ymax, xmax] = box;
+        const div = document.createElement('div');
+        div.className = 'highlight-box';
+        div.dataset.fieldId = id; // For linking
+        div.style.borderColor = color;
+        div.title = label;
+        
+        div.style.top = (ymin / 10) + '%';
+        div.style.left = (xmin / 10) + '%';
+        div.style.height = ((ymax - ymin) / 10) + '%';
+        div.style.width = ((xmax - xmin) / 10) + '%';
+        
+        overlayContainer.appendChild(div);
+    }
 
-                const row = `<tr>
-                    <td>${f.label}</td>
-                    <td class="fs-4">${statusIcon}</td>
-                    <td>${details}</td>
-                </tr>`;
-                table.innerHTML += row;
-            });
-        };
-    </script>
+    function highlightBox(fieldId) {
+        const boxes = document.querySelectorAll(`.highlight-box[data-field-id="${fieldId}"]`);
+        boxes.forEach(b => {
+            b.style.backgroundColor = "rgba(255, 255, 255, 0.5)";
+            b.style.zIndex = 30;
+            b.style.boxShadow = "0 0 0 2px white, 0 0 10px rgba(0,0,0,0.5)";
+        });
+    }
+
+    function unhighlightBox(fieldId) {
+        const boxes = document.querySelectorAll(`.highlight-box[data-field-id="${fieldId}"]`);
+        boxes.forEach(b => {
+            b.style.backgroundColor = "rgba(255, 255, 255, 0.1)";
+            b.style.zIndex = 10;
+            b.style.boxShadow = "none";
+        });
+    }
+</script>
+
 </body>
 </html>
