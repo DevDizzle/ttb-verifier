@@ -155,7 +155,7 @@
 <nav class="navbar navbar-expand-lg navbar-dark mb-4">
     <div class="container-fluid px-4">
         <a class="navbar-brand" href="#">
-            <i class="bi bi-shield-fill-check text-warning me-2" style="color: var(--compliance-gold) !important;"></i>TTB Verifier <small class="opacity-50 fw-normal ms-1" style="font-size: 0.6em; text-transform: uppercase; letter-spacing: 1px;">Official Tool</small>
+            <i class="bi bi-shield-fill-check text-warning me-2" style="color: var(--compliance-gold) !important;"></i>TTB Verifier <small class="opacity-50 fw-normal ms-1" style="font-size: 0.6em; text-transform: uppercase; letter-spacing: 1px;">v2.0</small>
         </a>
     </div>
 </nav>
@@ -166,9 +166,8 @@
         <!-- COLUMN 1: INPUT FORM -->
         <div class="col-lg-3">
             <div class="card sticky-col">
-                <div class="card-header d-flex justify-content-between align-items-center">
-                    <span>Product Details</span>
-                    <i class="bi bi-pencil-square text-secondary"></i>
+                <div class="card-header">
+                    <i class="bi bi-card-list me-2 text-secondary"></i>Product Details
                 </div>
                 <div class="card-body">
                     <form id="verifyForm">
@@ -233,7 +232,9 @@
         <div class="col-lg-4">
             <div class="card h-100" style="min-height: 400px;">
                 <div class="card-header d-flex justify-content-between align-items-center">
-                    <span>Verification Results</span>
+                    <div>
+                        <i class="bi bi-clipboard-check me-2 text-secondary"></i>Verification Results
+                    </div>
                     <span id="tokenBadge" class="badge bg-light text-dark border" style="display:none;">0 Tokens</span>
                 </div>
                 
