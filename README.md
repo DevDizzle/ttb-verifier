@@ -72,6 +72,44 @@ The application is containerized (Docker) and deployed to **Google Cloud Run**. 
   ├── main.py            # FastAPI backend (Gemini + Vision Logic)
   └── templates/         # UI Frontend (Jinja2, Agency Theme)
 /samples                 # Example label images for testing
+/tests                   # Automated tests
+  ├── test_api.py        # Unit tests
+  └── test_e2e.py        # End-to-End tests
 Dockerfile               # Container configuration
 requirements.txt         # Python dependencies
 ```
+
+## ✅ Automated Testing
+
+I have included both Unit and End-to-End tests to ensure reliability.
+
+### 1. Install Test Dependencies
+```bash
+pip install pytest httpx playwright pytest-playwright
+playwright install
+```
+
+### 2. Run Tests
+You need two terminal tabs.
+
+**Terminal 1 (Run your App):**
+You must have the app running for the E2E test to visit localhost:8000.
+```bash
+uvicorn app.main:app --host 127.0.0.1 --port 8000
+```
+
+**Terminal 2 (Run the Tests):**
+```bash
+# Run ALL tests
+pytest
+
+# Run just the unit tests (Fast)
+pytest tests/test_api.py
+
+# Run just the E2E tests (Slower, launches browser)
+pytest tests/test_e2e.py
+```
+
+**Test Details:**
+*   **Unit Tests (`tests/test_api.py`)**: Uses `pytest` and `unittest.mock` to verify API logic without incurring costs on the Vertex AI API.
+*   **E2E Tests (`tests/test_e2e.py`)**: Uses `Playwright` to spin up a headless Chromium browser and test the full user flow (Upload -> Verify -> UI Result).
