@@ -19,6 +19,21 @@ This is a full-stack automated compliance agent designed to simulate the TTB alc
 * **AI/ML:** **Google Vertex AI** (Gemini 2.0 Flash) & **Google Cloud Vision API**.
 * **Infrastructure:** **Google Cloud Run** (Serverless container).
 
+## 💰 Estimated Cost per Image
+
+Running this automated verification is significantly cheaper than human labor. Here is a rough breakdown based on standard pricing (as of late 2024/2025):
+
+*   **Gemini 2.0 Flash:**
+    *   **Input Tokens (~$0.10 / 1M tokens):** A typical label image + prompt consumes ~3,000 tokens.
+    *   **Output Tokens (~$0.40 / 1M tokens):** The JSON response is small (~200 tokens).
+    *   *Estimated Gemini Cost:* ~$0.0004 per transaction.
+
+*   **Google Cloud Vision API:**
+    *   **OCR (Text Detection):** ~$1.50 per 1,000 units (after the first 1,000 free per month).
+    *   *Estimated Vision Cost:* ~$0.0015 per transaction.
+
+**Total Estimated Cost:** **~$0.0019 per label** (less than 1/5th of a penny).
+
 ## 🚀 How to Run Locally
 
 ### Prerequisites
